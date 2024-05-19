@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aundre Player</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            height: 100vh; /* Full viewport height */
+            display: flex;
+            justify-content: center; /* Center horizontally */
+            align-items: center; /* Center vertically */
+            flex-direction: column; /* Stack items vertically */
+            font-family: 'Consolas', monospace; /* Consolas font */
+            color: white;
+            background-color: #202020;
+            position: relative; /* Position relative for absolute positioning */
+        }
+
+        .song-info {
+            text-align: center;
+        }
+
+        .artist-name {
+            font-size: 0.8em; /* Smaller font size for artist name */
+        }
+
+        .music-name {
+            font-size: 2em; /* Adjust font size as needed */
+            width: 400px; /* Set width to 400px */
+            height: 40px; /* Set height to 40px */
+            line-height: 40px; /* Center vertically */
+            margin-bottom: 20px; /* Add some margin */
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        .player-bar {
+            position: fixed;
+            bottom: 20px;
+            left: 0;
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center; /* Aligns items to the center */
+            box-sizing: border-box;
+            color: white;
+        }
+
+        .player-btn {
+            background: none;
+            border: 1px solid white;
+            padding: 5px 10px;
+            cursor: pointer;
+            margin: 0 10px;
+        }
+
+        .progress-bar {
+            width: 50%;
+            height: 8px;
+            -webkit-appearance: none;
+            appearance: none;
+            background: #404040;
+            outline: none;
+            margin: 0 10px;
+        }
+
+        .progress-bar::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background: #B654FF;
+            cursor: pointer;
+        }
+
+        .progress-bar::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            background: white;
+            cursor: pointer;
+        }
+
+        .volume-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            background: white;
+            width: 100px; /* Adjust width as needed */
+            height: 8px;
+            outline: none;
+            margin: 0 10px;
+        }
+
+        .volume-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 15px;
+            height: 15px;
+            background: #B654FF;
+            cursor: pointer;
+        }
+
+        .volume-slider::-moz-range-thumb {
+            width: 15px;
+            height: 15px;
+            background: #202020;
+            cursor: pointer;
+        }
+
+        #cover-art {
+            width: 200px; /* Adjust as needed */
+            height: 200px; /* Adjust as needed */
+            z-index: -1; /* Push the cover art behind other elements */
+            display: none; /* Initially hide cover art */
+        }
+
+        .context-menu {
+            position: fixed;
+            background-color: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            display: none;
+        }
+
+        .context-menu.show {
+            display: block;
+        }
+
+        .about-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            cursor: pointer;
+        }
+
+        .brand-name {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            font-family: Arial, sans-serif;
+            font-size: 24px;
+            font-weight: bold;
+            color: #B654FF;
+        }
+
+        .dolby-atmos-btn {
+            position: absolute;
+            top: 10px;
+            right: 90px;
+            cursor: pointer;
+            display: none; /* Initially hide Dolby Atmos logo */
+        }
+
+        .apple-lossless-logo {
+            position: absolute;
+            top: 10px;
+            right: 190px;
+            cursor: pointer;
+            display: none; /* Initially hide Apple Lossless logo */
+        }
+    </style>
+</head>
+<body>
+    <a href="#" onclick="location.reload();"><img src="https://upload.wikimedia.org/wikipedia/commons/d/d2/Dolby_Atmos.png" alt="Dolby Atmos" width="80" height="25" class="dolby-atmos-btn" id="dolbyLogoContainer"></a>
+
+    <div class="brand-name">Aundre Player</div>
+
+    <a href="https://support.apple.com/en-lk/118295">
+        <img src="https://seeklogo.com/images/A/apple-lossless-logo-AF2590A2DE-seeklogo.com.png" alt="Apple Lossless Logo" width="80" height="24" class="apple-lossless-logo" id="losslessLogoContainer">
+    </a>
+
+    <div class="about-btn" onclick="window.open('https://aundreabouthelpcenter.netlify.app/')">About</div>
+
+    <div class="song-info">
+        <div class="music-name">Music Title</div>
+        <div class="artist-name">Artist Name</div>
+    </div>
+
+    <div class="player-bar">
+        <input type="file" accept="audio/*,video/*" id="fileInput"> <!-- Choose file input -->
+        <button class="player-btn" id="playPauseBtn">Play</button>
+        <input type="range" class="progress-bar" id="progressBar" value="0" step="0.01">
+        <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="1">
+    </div>
+
+    <img src="" alt="Cover Art" id="cover-art"> <!-- Empty src attribute for dynamic updating -->
+
+    <div class="context-menu" id="contextMenu">
+        <div id="musicTitle"></div>
+    </div>
+
+    <audio id="audioPlayer" style="display: none;"></audio>
+
+    <script>
+        const playPauseBtn = document.getElementById('playPauseBtn');
+        const progressBar = document.getElementById('progressBar');
+        const fileInput = document.getElementById('fileInput');
+        const coverArt = document.getElementById('cover-art');
+        const musicName = document.querySelector('.music-name');
+        const artistName = document.querySelector('.artist-name');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const contextMenu = document.getElementById('contextMenu');
+        const volumeSlider = document.getElementById('volumeSlider');
+        const dolbyLogoContainer = document.getElementById('dolbyLogoContainer');
+        const losslessLogoContainer = document.getElementById('losslessLogoContainer');
+
+        // Define an array of colors
+        const colors = ['#9933ff', '#ff3347', '#ff5c33', '#fafafa', '#406df5', '#f540c1', '#4ff540'];
+        let currentColorIndex = 0;
+
+        // Function to change the color of the song name
+        function changeColor() {
+            musicName.style.color = colors[currentColorIndex];
+            currentColorIndex = (currentColorIndex + 1) % colors.length;
+        }
+
+        // Call the function initially
+        changeColor();
+
+        // Set interval to change color every 5 seconds
+        setInterval(changeColor, 5000);
+
+        playPauseBtn.addEventListener('click', () => {
+            if (audioPlayer.paused) {
+                audioPlayer.play();
+                playPauseBtn.textContent = 'Pause';
+            } else {
+                audioPlayer.pause();
+                playPauseBtn.textContent = 'Play';
+            }
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            const fileName = file.name.split('.').slice(0, -1).join('.');
+            const extension = file.name.split('.').pop().toLowerCase();
+            const url = URL.createObjectURL(file);
+            audioPlayer.src = url;
+            audioPlayer.play();
+            playPauseBtn.textContent = 'Pause';
+            musicName.textContent = fileName; // Use fileName instead of file.name
+            // Check the file extension and show/hide logos accordingly
+            if (extension === 'm4a') {
+                dolbyLogoContainer.style.display = 'inline-block';
+                losslessLogoContainer.style.display = 'inline-block';
+            } else {
+                dolbyLogoContainer.style.display = 'none';
+                losslessLogoContainer.style.display = 'none';
+            }
+            // You might want to fetch or set cover art as needed here
+        });
+
+        audioPlayer.addEventListener('timeupdate', () => {
+            const progress = (audioPlayer.currentTime / audioPlayer.duration) * 100;
+            progressBar.value = progress;
+        });
+
+        progressBar.addEventListener('input', () => {
+            const seekTime = (progressBar.value * audioPlayer.duration) / 100;
+            audioPlayer.currentTime = seekTime;
+        });
+
+        volumeSlider.addEventListener('input', () => {
+            audioPlayer.volume = volumeSlider.value;
+        });
+
+        // Context menu functions remain unchanged
+    </script>
+</body>
+</html>
